@@ -1,0 +1,1 @@
+INSERT INTO measures (city, timestamp, temp, humidity, clouds, wind_speed) VALUES (%s, %s, %s, %s, %s, %s)
