@@ -16,7 +16,7 @@ def get_timestamp(date_string):
 
 
 def _process_weather(**kwargs):
-    info = kwargs["ti"].xcom_pull(kwargs["extract_data_task_id"])
+    info = kwargs["ti"].xcom_pull(kwargs["get_data_task_id"])
     timestamp = info["current"]["dt"]
     temp = info["current"]["temp"]
     humidity = info["current"]["humidity"]
@@ -73,19 +73,19 @@ with DAG(dag_id="weather_hw1",
             task_id=f"process_data_{city}",
             python_callable=_process_weather,
             provide_context=True,
-            op_kwargs={"city": city, "extract_data_task_id": f"extract_data_{city}"}
+            op_kwargs={"city": city, "get_data_task_id": f"get_data_{city}"}
         )
 
         push_to_table = PostgresOperator(
             task_id=f"push_to_table_{city}",
             postgres_conn_id="weather_pg_conn",
             sql="sql/fill.sql",
-            parameters=[city,
-                        "{{ ti.xcom_pull(task_ids='process_data_" + city + ")[0] }}",
-                        "{{ ti.xcom_pull(task_ids='process_data_" + city + ")[1] }}",
-                        "{{ ti.xcom_pull(task_ids='process_data_" + city + ")[2] }}",
-                        "{{ ti.xcom_pull(task_ids='process_data_" + city + ")[3] }}",
-                        "{{ ti.xcom_pull(task_ids='process_data_" + city + ")[4] }}"]
+            parameters=["{{ ti.xcom_pull(task_ids='process_data_" + city + "')[0] }}",
+                        "{{ ti.xcom_pull(task_ids='process_data_" + city + "')[1] }}",
+                        "{{ ti.xcom_pull(task_ids='process_data_" + city + "')[2] }}",
+                        "{{ ti.xcom_pull(task_ids='process_data_" + city + "')[3] }}",
+                        "{{ ti.xcom_pull(task_ids='process_data_" + city + "')[4] }}",
+                        "{{ ti.xcom_pull(task_ids='process_data_" + city + "')[5] }}"]
         )
 
         create_table >> check_api >> get_data >> process_data >> push_to_table
